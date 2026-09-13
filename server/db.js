@@ -66,12 +66,42 @@ if (!gameRow) {
 
 // Seed the six fixed questions if missing. QR->Question mapping never changes.
 const DEFAULT_QUESTIONS = [
-  { qrId: 1, questionText: 'What is the capital of Gujarat?', correctAnswer: 'Gandhinagar' },
-  { qrId: 2, questionText: 'How many players are on one team?', correctAnswer: '2' },
-  { qrId: 3, questionText: 'What is the national currency of India?', correctAnswer: 'Rupee' },
-  { qrId: 4, questionText: 'How many continents are there on Earth?', correctAnswer: '7' },
-  { qrId: 5, questionText: 'What planet is known as the Red Planet?', correctAnswer: 'Mars' },
-  { qrId: 6, questionText: 'How many total winners does this game have?', correctAnswer: '6' },
+  {
+    qrId: 1,
+    questionText:
+      'I have no mass, yet I carry momentum. I can push an object without touching it. I travel fastest where there is nothing to stop me. What am I?',
+    correctAnswer: 'Light',
+  },
+  {
+    qrId: 2,
+    questionText:
+      'I pull without hands, I act without touching, and I keep you from floating away. I hold the Moon in its path and make every object with mass attract another. The farther you go from me, the weaker I become. What am I?',
+    correctAnswer: 'Gravity',
+  },
+  {
+    qrId: 3,
+    questionText:
+      'I am invisible, but I can make a machine come alive. I need a path to travel, and when my path is broken, my work stops. I can light a bulb, power a motor, and charge the device in your hand. What am I?',
+    correctAnswer: 'Current',
+  },
+  {
+    qrId: 4,
+    questionText:
+      'You cannot see me, but you can feel me pushing against you. Stand on one foot and I increase beneath that point. Spread your weight over a larger area and I decrease. A sharp needle uses me differently from a flat shoe. What am I?',
+    correctAnswer: 'Pressure',
+  },
+  {
+    qrId: 5,
+    questionText:
+      'I can be hard enough to build with, flow freely through a container, or spread invisibly through the air. I can change my form without becoming a different substance. Heat can make me change from one state to another. What am I?',
+    correctAnswer: 'Matter',
+  },
+  {
+    qrId: 6,
+    questionText:
+      'You cannot see me, but you can feel me when something moving hits you. A heavy object moving slowly can have me, while a light object moving very fast can also have me. Stop the object, and I disappear. The more mass and motion an object has, the greater I become. What am I?',
+    correctAnswer: 'Momentum',
+  },
 ];
 
 const insertQ = db.prepare(
