@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>QR Relay Showdown</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <div id="view-loading" class="card">
+      <div class="spin"></div>
+      <p style="text-align:center;">Loading your team...</p>
+    </div>
+
+    <div id="view-error" class="card hidden">
+      <div class="eyebrow">Can't continue</div>
+      <h2 id="error-title">Something went wrong</h2>
+      <p id="error-message"></p>
+    </div>
+
+    <div id="view-register" class="card hidden">
+      <div class="eyebrow">Question <span id="reg-qnum"></span> · <span id="reg-slots"></span> teams joined</div>
+      <h1>Register your team</h1>
+      <p>Two players, one Team ID. Double-check spelling — this is how you'll show up on the leaderboard.</p>
+      <form id="register-form">
+        <div class="field">
+          <label for="p1">Player 1 name</label>
+          <input id="p1" type="text" autocomplete="off" required />
+        </div>
+        <div class="field">
+          <label for="p2">Player 2 name</label>
+          <input id="p2" type="text" autocomplete="off" required />
+        </div>
+        <div class="field">
+          <label for="tid">Team ID</label>
+          <input id="tid" type="text" autocomplete="off" placeholder="e.g. T05" required />
+        </div>
+        <div id="register-error" class="feedback error hidden"></div>
+        <button type="submit" class="primary" id="register-btn">Register team</button>
+      </form>
+    </div>
+
+    <div id="view-waiting" class="card hidden">
+      <span class="status-pill waiting">Waiting for admin</span>
+      <h1 style="margin-top:12px;">You're in, <span id="wait-team"></span></h1>
+      <div class="players-row">
+        <span id="wait-p1"></span> &amp; <span id="wait-p2"></span>
+      </div>
+      <p style="margin-top:16px;">Your question is locked in as <strong id="wait-qnum"></strong>. Keep this page open — it'll switch automatically the moment the game starts.</p>
+      <div class="spin"></div>
+    </div>
+
+    <div id="view-question" class="card hidden">
+      <span class="status-pill live">Live</span>
+      <div class="eyebrow" style="margin-top:12px;">Question <span id="q-num"></span> · Team <span id="q-team"></span></div>
+      <h2 id="q-text"></h2>
+      <div id="q-feedback" class="feedback wrong hidden"></div>
+      <form id="answer-form">
+        <div class="field">
+          <label for="answer">Your answer</label>
+          <input id="answer" type="text" autocomplete="off" required />
+        </div>
+        <div class="attempt-dots" id="attempt-dots"></div>
+        <p style="margin:0 0 14px; font-size:13px;"><span id="attempts-left"></span> attempts left</p>
+        <button type="submit" class="primary" id="answer-btn">Submit answer</button>
+      </form>
+    </div>
+
+    <div id="view-result" class="card hidden">
+      <div class="result-hero">
+        <span class="status-pill" id="result-pill"></span>
+        <div class="big" id="result-big"></div>
+        <div id="result-rank"></div>
+      </div>
+      <p id="result-reason" style="text-align:center;"></p>
+      <div class="players-row" style="justify-content:center;">
+        <span id="result-p1"></span> &amp; <span id="result-p2"></span> · Team <span id="result-team"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/player.js"></script>
+</body>
+</html>

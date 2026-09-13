@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin · QR Relay Showdown</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <div id="view-login" class="shell">
+    <div class="card">
+      <div class="eyebrow">Admin</div>
+      <h1>Sign in</h1>
+      <form id="login-form">
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+        </div>
+        <div id="login-error" class="feedback error hidden"></div>
+        <button type="submit" class="primary">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="view-dashboard" class="wide-shell hidden">
+    <div class="top-bar">
+      <div>
+        <div class="eyebrow">QR Relay Showdown</div>
+        <h1 style="margin:0;">Admin dashboard</h1>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="status-pill" id="game-status-pill">—</span>
+        <button class="ghost" id="reset-btn" style="width:auto;">Reset game</button>
+        <button class="ghost" id="logout-btn" style="width:auto;">Sign out</button>
+      </div>
+    </div>
+
+    <div id="dash-error" class="error-banner hidden"></div>
+
+    <div class="card">
+      <h2>Event overview</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num" id="stat-teams">0/18</div><div class="label">Teams registered</div></div>
+        <div class="stat-box"><div class="num" id="stat-successful">0/6</div><div class="label">Successful</div></div>
+        <div class="stat-box"><div class="num" id="stat-remaining">0</div><div class="label">Still playing</div></div>
+      </div>
+      <h3 style="margin-top:20px;">QR codes</h3>
+      <div class="qr-grid" id="qr-grid"></div>
+    </div>
+
+    <div class="card" id="questions-card">
+      <h2>Questions &amp; answers</h2>
+      <p id="questions-lock-note"></p>
+      <div id="questions-list"></div>
+    </div>
+
+    <div class="card">
+      <h2>Start the game</h2>
+      <p>Locks all question editing and reveals each team's assigned question at the same moment.</p>
+      <button class="primary" id="start-btn" style="max-width:280px;">Start game</button>
+    </div>
+
+    <div class="card">
+      <h2>Teams</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Rank</th><th>Team</th><th>Player 1</th><th>Player 2</th><th>QR</th><th>Attempts</th><th>Status</th></tr>
+          </thead>
+          <tbody id="teams-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card hidden" id="final-results-card">
+      <h2>Game completed</h2>
+      <h3>Winners</h3>
+      <ol id="final-winners"></ol>
+      <h3>Everyone else</h3>
+      <p id="final-losers-count"></p>
+    </div>
+
+  </div>
+
+  <div id="team-modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal" id="team-modal-content"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>
