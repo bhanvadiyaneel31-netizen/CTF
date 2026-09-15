@@ -31,6 +31,16 @@ function serializeTeamForClient(team, game, includeQuestionText) {
     const q = logic.getQuestionPublic(team.qrId);
     base.questionText = q ? q.questionText : null;
   }
+  if (team.status === 'LOSE') {
+    const last = logic.getLastAttempt(team.teamId);
+    if (last && last.isCorrect) {
+      base.loseReason = 'ANSWERED_LATE'; // correct, but all 6 winner slots were already taken
+    } else if (team.attemptsUsed >= logic.MAX_ATTEMPTS) {
+      base.loseReason = 'ATTEMPTS_USED';
+    } else {
+      base.loseReason = 'GAME_ENDED'; // admin ended the game before this team finished
+    }
+  }
   return base;
 }
 
@@ -96,11 +106,11 @@ router.post('/api/answer', (req, res) => {
     const result = logic.submitAnswer(team.teamId, String(answer));
     const io = req.app.get('io');
 
-    if (result.outcome === 'CORRECT' && result.finished) {
-      io.emit('game:finished', { successfulCount: result.game.successfulCount });
-    }
-    if (result.outcome === 'CORRECT' || result.outcome === 'OUT_OF_ATTEMPTS') {
+    if (['CORRECT', 'CORRECT_TOO_LATE', 'OUT_OF_ATTEMPTS'].includes(result.outcome)) {
       io.emit('leaderboard:update');
+    }
+    if (result.finished) {
+      io.emit('game:finished', { successfulCount: result.game.successfulCount });
     }
 
     const game = logic.getGame();

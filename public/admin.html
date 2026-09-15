@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin · QR Relay Showdown</title>
-<link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · QR Relay Showdown</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
+
 <body>
 
   <div id="view-login" class="shell">
@@ -41,9 +43,18 @@
     <div class="card">
       <h2>Event overview</h2>
       <div class="stat-grid">
-        <div class="stat-box"><div class="num" id="stat-teams">0/18</div><div class="label">Teams registered</div></div>
-        <div class="stat-box"><div class="num" id="stat-successful">0/6</div><div class="label">Successful</div></div>
-        <div class="stat-box"><div class="num" id="stat-remaining">0</div><div class="label">Still playing</div></div>
+        <div class="stat-box">
+          <div class="num" id="stat-teams">0/18</div>
+          <div class="label">Teams registered</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-successful">0/6</div>
+          <div class="label">Successful</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-remaining">0</div>
+          <div class="label">Still playing</div>
+        </div>
       </div>
       <h3 style="margin-top:20px;">QR codes</h3>
       <div class="qr-grid" id="qr-grid"></div>
@@ -62,11 +73,28 @@
     </div>
 
     <div class="card">
+      <h2>Game controls</h2>
+      <p>Every team gets to use all 3 attempts, even after the 6 winner slots are filled — the game finishes on its own
+        once every team has either won or used all 3 attempts. Use this button to end it manually instead (e.g. some
+        teams never finished).</p>
+      <button class="ghost" id="end-btn" style="max-width:280px; border-color:var(--red); color:var(--red);">End game
+        now</button>
+    </div>
+
+    <div class="card">
       <h2>Teams</h2>
       <div class="table-scroll">
         <table>
           <thead>
-            <tr><th>Rank</th><th>Team</th><th>Player 1</th><th>Player 2</th><th>QR</th><th>Attempts</th><th>Status</th></tr>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Player 1</th>
+              <th>Player 2</th>
+              <th>QR</th>
+              <th>Attempts</th>
+              <th>Status</th>
+            </tr>
           </thead>
           <tbody id="teams-tbody"></tbody>
         </table>
@@ -90,4 +118,5 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/admin.js"></script>
 </body>
+
 </html>

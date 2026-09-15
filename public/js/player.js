@@ -68,7 +68,13 @@
     show('question');
   }
 
-  function renderResult(team, reason) {
+  const LOSE_REASON_TEXT = {
+    ATTEMPTS_USED: 'You used all 3 attempts.',
+    ANSWERED_LATE: 'Correct answer — but the first six teams had already qualified.',
+    GAME_ENDED: 'The game was ended before you finished.',
+  };
+
+  function renderResult(team) {
     const isWinner = team.status === 'WINNER';
     document.getElementById('result-pill').textContent = isWinner ? 'Winner' : 'Game over';
     document.getElementById('result-pill').className = 'status-pill ' + (isWinner ? 'live' : 'finished');
@@ -77,8 +83,9 @@
     document.getElementById('result-rank').innerHTML = isWinner
       ? `<span class="rank-badge">Global rank #${team.globalRank}</span>`
       : '';
-    document.getElementById('result-reason').textContent =
-      reason || (isWinner ? `Solved on attempt ${team.attemptsUsed} of ${team.maxAttempts}.` : 'The first six teams have already qualified.');
+    document.getElementById('result-reason').textContent = isWinner
+      ? `Solved on attempt ${team.attemptsUsed} of ${team.maxAttempts}.`
+      : (LOSE_REASON_TEXT[team.loseReason] || 'The first six teams had already qualified.');
     document.getElementById('result-p1').textContent = team.player1;
     document.getElementById('result-p2').textContent = team.player2;
     document.getElementById('result-team').textContent = team.teamId;
@@ -86,13 +93,7 @@
   }
 
   function renderFromTeam(team) {
-    if (team.status === 'WINNER') return renderResult(team);
-    if (team.status === 'LOSE') {
-      const reason = team.attemptsUsed >= team.maxAttempts
-        ? 'You used all 3 attempts.'
-        : 'The first six teams have already qualified.';
-      return renderResult(team, reason);
-    }
+    if (team.status === 'WINNER' || team.status === 'LOSE') return renderResult(team);
     if (team.gameStatus === 'LIVE' && (team.status === 'PLAYING' || team.status === 'WAITING')) {
       return renderQuestion(team);
     }

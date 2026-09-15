@@ -103,6 +103,20 @@ router.post('/api/admin/start', requireAdmin, (req, res) => {
   }
 });
 
+router.post('/api/admin/end', requireAdmin, (req, res) => {
+  try {
+    const game = logic.endGame();
+    const io = req.app.get('io');
+    io.emit('leaderboard:update');
+    io.emit('game:finished', { successfulCount: game.successfulCount });
+    res.json({ game });
+  } catch (e) {
+    const status = e.statusCode || 500;
+    if (status === 500) console.error(e);
+    res.status(status).json({ error: e.message || 'Could not end game.' });
+  }
+});
+
 router.post('/api/admin/reset', requireAdmin, (req, res) => {
   logic.resetGame();
   const io = req.app.get('io');

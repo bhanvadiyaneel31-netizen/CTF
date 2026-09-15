@@ -69,11 +69,36 @@ const registerTeam = db.transaction((qrId, teamId, player1Name, player2Name) => 
   return getTeamByTeamId(teamId);
 });
 
+function getLastAttempt(teamId) {
+  return db
+    .prepare('SELECT * FROM attempts WHERE teamId = ? ORDER BY attemptNumber DESC LIMIT 1')
+    .get(teamId);
+}
+
+function countActiveTeams() {
+  return db
+    .prepare(`SELECT COUNT(*) AS c FROM teams WHERE status NOT IN ('WINNER', 'LOSE')`)
+    .get().c;
+}
+
+function countAllTeams() {
+  return db.prepare('SELECT COUNT(*) AS c FROM teams').get().c;
+}
+
 /**
  * Submit an answer attempt for a team. Fully atomic: game status,
- * successful count, attempt count, correctness, rank assignment and the
- * FINISHED transition all happen inside one transaction so a 6th-place tie
- * cannot occur and a stale client can never sneak in an extra attempt.
+ * successful count, attempt count, correctness and rank assignment all
+ * happen inside one transaction so two simultaneous submissions can't both
+ * claim the same winning rank, and a stale client can never sneak in an
+ * extra attempt.
+ *
+ * Every team gets to use all 3 attempts regardless of what other teams are
+ * doing. The 6 winner ranks are still awarded strictly to the first 6
+ * correct answers by server timestamp — a correct answer submitted after
+ * all 6 ranks are taken does not win, it's recorded as LOSE with a reason
+ * a client can distinguish (see getLastAttempt / loseReason downstream).
+ * The game only flips to FINISHED once every registered team has reached a
+ * terminal state (WINNER or LOSE), or the admin ends it manually.
  */
 const submitAnswer = db.transaction((teamId, rawAnswer) => {
   const game = getGame();
@@ -105,57 +130,52 @@ const submitAnswer = db.transaction((teamId, rawAnswer) => {
      VALUES (?, ?, ?, ?, ?)`
   ).run(teamId, attemptNumber, rawAnswer, isCorrect ? 1 : 0, now);
 
-  if (isCorrect) {
-    // Re-read successful count fresh inside the transaction to avoid races.
-    const fresh = getGame();
-    if (fresh.status === 'FINISHED' || fresh.successfulCount >= fresh.maxWinners) {
-      // Game finished between our status check and now (shouldn't happen
-      // since this whole function is one transaction, but guard anyway).
-      db.prepare('UPDATE teams SET attemptsUsed = ?, status = ? WHERE teamId = ?')
-        .run(attemptNumber, 'LOSE', teamId);
-      return { outcome: 'GAME_OVER_ALREADY', team: getTeamByTeamId(teamId), game: fresh };
-    }
-    const newCount = fresh.successfulCount + 1;
+  let outcome;
+  if (isCorrect && game.successfulCount < game.maxWinners) {
+    // A winning slot is still open — this team claims the next rank.
+    const newCount = game.successfulCount + 1;
     const rank = newCount;
     db.prepare(
       `UPDATE teams SET attemptsUsed = ?, status = 'WINNER', successfulAt = ?, globalRank = ? WHERE teamId = ?`
     ).run(attemptNumber, now, rank, teamId);
-
-    let finished = false;
-    if (newCount >= fresh.maxWinners) {
-      db.prepare(
-        `UPDATE game SET successfulCount = ?, status = 'FINISHED', finishedAt = ? WHERE id = 1`
-      ).run(newCount, now);
-      finished = true;
-      // Every team that has not already qualified immediately loses.
-      db.prepare(
-        `UPDATE teams SET status = 'LOSE' WHERE status NOT IN ('WINNER') `
-      ).run();
-    } else {
-      db.prepare(`UPDATE game SET successfulCount = ? WHERE id = 1`).run(newCount);
-    }
-
-    return {
-      outcome: 'CORRECT',
-      team: getTeamByTeamId(teamId),
-      game: getGame(),
-      finished,
-    };
-  } else {
-    let status = 'PLAYING';
-    if (attemptNumber >= MAX_ATTEMPTS) status = 'LOSE';
-    db.prepare('UPDATE teams SET attemptsUsed = ?, status = ? WHERE teamId = ?').run(
+    db.prepare(`UPDATE game SET successfulCount = ? WHERE id = 1`).run(newCount);
+    outcome = 'CORRECT';
+  } else if (isCorrect) {
+    // Correct, but all 6 winner slots were already taken by faster teams.
+    db.prepare(`UPDATE teams SET attemptsUsed = ?, status = 'LOSE' WHERE teamId = ?`).run(
       attemptNumber,
-      status,
       teamId
     );
-    return {
-      outcome: status === 'LOSE' ? 'OUT_OF_ATTEMPTS' : 'WRONG',
-      team: getTeamByTeamId(teamId),
-      game,
+    outcome = 'CORRECT_TOO_LATE';
+  } else if (attemptNumber >= MAX_ATTEMPTS) {
+    db.prepare(`UPDATE teams SET attemptsUsed = ?, status = 'LOSE' WHERE teamId = ?`).run(
       attemptNumber,
-    };
+      teamId
+    );
+    outcome = 'OUT_OF_ATTEMPTS';
+  } else {
+    db.prepare(`UPDATE teams SET attemptsUsed = ?, status = 'PLAYING' WHERE teamId = ?`).run(
+      attemptNumber,
+      teamId
+    );
+    outcome = 'WRONG';
   }
+
+  // The game auto-finishes once every registered team has reached a
+  // terminal state — not the moment the 6th winner is decided.
+  let finished = false;
+  if (countAllTeams() > 0 && countActiveTeams() === 0) {
+    db.prepare(`UPDATE game SET status = 'FINISHED', finishedAt = ? WHERE id = 1`).run(now);
+    finished = true;
+  }
+
+  return {
+    outcome,
+    team: getTeamByTeamId(teamId),
+    game: getGame(),
+    attemptNumber,
+    finished,
+  };
 });
 
 const startGame = db.transaction(() => {
@@ -170,6 +190,22 @@ const startGame = db.transaction(() => {
   const now = new Date().toISOString();
   db.prepare(`UPDATE game SET status = 'LIVE', startedAt = ? WHERE id = 1`).run(now);
   db.prepare(`UPDATE teams SET status = 'PLAYING' WHERE status = 'WAITING'`).run();
+  return getGame();
+});
+
+/**
+ * Manual admin override: end the game right now. Any team that hasn't yet
+ * won or exhausted its attempts is marked LOSE with reason "game ended"
+ * (distinguishable from "used all attempts" via getLastAttempt).
+ */
+const endGame = db.transaction(() => {
+  const game = getGame();
+  if (game.status !== 'LIVE') {
+    throw new HttpError(409, 'The game is not currently live.');
+  }
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE teams SET status = 'LOSE' WHERE status NOT IN ('WINNER', 'LOSE')`).run();
+  db.prepare(`UPDATE game SET status = 'FINISHED', finishedAt = ? WHERE id = 1`).run(now);
   return getGame();
 });
 
@@ -215,6 +251,8 @@ module.exports = {
   registerTeam,
   submitAnswer,
   startGame,
+  endGame,
+  getLastAttempt,
   updateQuestion,
   resetGame,
   HttpError,

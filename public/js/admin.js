@@ -40,7 +40,7 @@
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
-    await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
+    await api('/api/admin/logout', { method: 'POST' }).catch(() => { });
     loginView.classList.remove('hidden');
     dashView.classList.add('hidden');
   });
@@ -59,6 +59,16 @@
     if (!confirm('Start the game now? Question editing will lock immediately and every team will see its question.')) return;
     try {
       await api('/api/admin/start', { method: 'POST' });
+      await loadAll();
+    } catch (e) {
+      dashError(e.message);
+    }
+  });
+
+  document.getElementById('end-btn').addEventListener('click', async () => {
+    if (!confirm('End the game now? Any team that has not yet won or used all 3 attempts will be marked as not qualified.')) return;
+    try {
+      await api('/api/admin/end', { method: 'POST' });
       await loadAll();
     } catch (e) {
       dashError(e.message);
@@ -110,6 +120,7 @@
       ? 'Editable until the game starts.'
       : 'Locked — the game has already started.';
     document.getElementById('start-btn').disabled = !isWaiting;
+    document.getElementById('end-btn').disabled = game.status !== 'LIVE';
 
     const list = document.getElementById('questions-list');
     list.innerHTML = '';
