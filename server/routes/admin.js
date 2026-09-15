@@ -117,6 +117,20 @@ router.post('/api/admin/end', requireAdmin, (req, res) => {
   }
 });
 
+router.post('/api/admin/publish-results', requireAdmin, (req, res) => {
+  const game = logic.publishResults();
+  const io = req.app.get('io');
+  io.emit('results:published');
+  res.json({ game });
+});
+
+router.post('/api/admin/unpublish-results', requireAdmin, (req, res) => {
+  const game = logic.unpublishResults();
+  const io = req.app.get('io');
+  io.emit('results:unpublished');
+  res.json({ game });
+});
+
 router.post('/api/admin/reset', requireAdmin, (req, res) => {
   logic.resetGame();
   const io = req.app.get('io');

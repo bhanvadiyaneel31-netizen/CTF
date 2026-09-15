@@ -14,24 +14,32 @@ function setTeamCookie(res, token) {
   });
 }
 
+const TERMINAL_STATUSES = ['WINNER', 'LOSE'];
+const TERMINAL_OUTCOMES = ['CORRECT', 'CORRECT_TOO_LATE', 'OUT_OF_ATTEMPTS', 'ALREADY_DECIDED', 'GAME_OVER_ALREADY'];
+
 function serializeTeamForClient(team, game, includeQuestionText) {
+  const isTerminal = TERMINAL_STATUSES.includes(team.status);
+  const pending = isTerminal && !game.resultsPublished;
+  const displayStatus = pending ? 'PENDING' : team.status;
+
   const base = {
     teamId: team.teamId,
     player1: team.player1Name,
     player2: team.player2Name,
     qrId: team.qrId,
-    status: team.status,
+    status: displayStatus,
     attemptsUsed: team.attemptsUsed,
     maxAttempts: logic.MAX_ATTEMPTS,
-    globalRank: team.globalRank || null,
-    successfulAt: team.successfulAt || null,
+    globalRank: pending ? null : team.globalRank || null,
+    successfulAt: pending ? null : team.successfulAt || null,
     gameStatus: game.status,
+    resultsPublished: !!game.resultsPublished,
   };
   if (includeQuestionText) {
     const q = logic.getQuestionPublic(team.qrId);
     base.questionText = q ? q.questionText : null;
   }
-  if (team.status === 'LOSE') {
+  if (!pending && team.status === 'LOSE') {
     const last = logic.getLastAttempt(team.teamId);
     if (last && last.isCorrect) {
       base.loseReason = 'ANSWERED_LATE'; // correct, but all 6 winner slots were already taken
@@ -42,6 +50,17 @@ function serializeTeamForClient(team, game, includeQuestionText) {
     }
   }
   return base;
+}
+
+// Hides *why* a team didn't win (or that it won) until results are
+// published — without this, a team could learn "the 6 slots are already
+// full" or "I actually got it right" the instant they submit, and pass
+// that on to other teams who haven't finished yet.
+function maskOutcome(outcome, game) {
+  if (TERMINAL_OUTCOMES.includes(outcome) && !game.resultsPublished) {
+    return 'PENDING';
+  }
+  return outcome;
 }
 
 // Info about a QR code: which question number it is, and whether it's full.
@@ -115,7 +134,7 @@ router.post('/api/answer', (req, res) => {
 
     const game = logic.getGame();
     res.json({
-      outcome: result.outcome,
+      outcome: maskOutcome(result.outcome, game),
       team: serializeTeamForClient(result.team, game, true),
     });
   } catch (e) {
@@ -131,6 +150,7 @@ router.get('/api/game/state', (req, res) => {
     status: game.status,
     successfulCount: game.successfulCount,
     maxWinners: game.maxWinners,
+    resultsPublished: !!game.resultsPublished,
   });
 });
 

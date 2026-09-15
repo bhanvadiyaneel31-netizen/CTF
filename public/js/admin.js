@@ -75,6 +75,26 @@
     }
   });
 
+  document.getElementById('publish-btn').addEventListener('click', async () => {
+    if (!confirm('Publish results now? Every team that has finished will immediately see whether they won or lost.')) return;
+    try {
+      await api('/api/admin/publish-results', { method: 'POST' });
+      await loadAll();
+    } catch (e) {
+      dashError(e.message);
+    }
+  });
+
+  document.getElementById('unpublish-btn').addEventListener('click', async () => {
+    if (!confirm('Hide results again? Teams currently seeing a result will go back to a "pending" screen.')) return;
+    try {
+      await api('/api/admin/unpublish-results', { method: 'POST' });
+      await loadAll();
+    } catch (e) {
+      dashError(e.message);
+    }
+  });
+
   // ---- Data loading ----
   let qrUrls = [];
 
@@ -121,6 +141,12 @@
       : 'Locked — the game has already started.';
     document.getElementById('start-btn').disabled = !isWaiting;
     document.getElementById('end-btn').disabled = game.status !== 'LIVE';
+
+    const publishPill = document.getElementById('publish-status-pill');
+    publishPill.textContent = game.resultsPublished ? 'Published' : 'Hidden from players';
+    publishPill.className = 'status-pill ' + (game.resultsPublished ? 'live' : 'waiting');
+    document.getElementById('publish-btn').disabled = !!game.resultsPublished;
+    document.getElementById('unpublish-btn').disabled = !game.resultsPublished;
 
     const list = document.getElementById('questions-list');
     list.innerHTML = '';
@@ -258,6 +284,8 @@
   socket.on('game:finished', () => { if (!dashView.classList.contains('hidden')) loadAll(); });
   socket.on('leaderboard:update', () => { if (!dashView.classList.contains('hidden')) loadAll(); });
   socket.on('game:reset', () => { if (!dashView.classList.contains('hidden')) loadAll(); });
+  socket.on('results:published', () => { if (!dashView.classList.contains('hidden')) loadAll(); });
+  socket.on('results:unpublished', () => { if (!dashView.classList.contains('hidden')) loadAll(); });
 
   // ---- Boot: check for an existing admin session ----
   (async function boot() {

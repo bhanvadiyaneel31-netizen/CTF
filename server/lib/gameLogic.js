@@ -223,11 +223,29 @@ const updateQuestion = db.transaction((qrId, questionText, correctAnswer) => {
   return getQuestionFull(qrId);
 });
 
+/**
+ * Admin control: reveal (or hide again) the real WINNER/LOSE outcome to
+ * players. A team's actual result is always decided immediately and
+ * atomically inside submitAnswer — this flag only controls what the
+ * player-facing API is allowed to reveal, so late-arriving teams can't use
+ * an early "you lose" reveal to infer the game is already won by someone
+ * else and change their behavior.
+ */
+const publishResults = db.transaction(() => {
+  db.prepare(`UPDATE game SET resultsPublished = 1 WHERE id = 1`).run();
+  return getGame();
+});
+
+const unpublishResults = db.transaction(() => {
+  db.prepare(`UPDATE game SET resultsPublished = 0 WHERE id = 1`).run();
+  return getGame();
+});
+
 const resetGame = db.transaction(() => {
   db.prepare('DELETE FROM attempts').run();
   db.prepare('DELETE FROM teams').run();
   db.prepare(
-    `UPDATE game SET status = 'WAITING', startedAt = NULL, finishedAt = NULL, successfulCount = 0, maxWinners = 6 WHERE id = 1`
+    `UPDATE game SET status = 'WAITING', startedAt = NULL, finishedAt = NULL, successfulCount = 0, maxWinners = 6, resultsPublished = 0 WHERE id = 1`
   ).run();
 });
 
@@ -255,5 +273,7 @@ module.exports = {
   getLastAttempt,
   updateQuestion,
   resetGame,
+  publishResults,
+  unpublishResults,
   HttpError,
 };

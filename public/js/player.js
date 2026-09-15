@@ -5,6 +5,7 @@
     register: document.getElementById('view-register'),
     waiting: document.getElementById('view-waiting'),
     question: document.getElementById('view-question'),
+    pending: document.getElementById('view-pending'),
     result: document.getElementById('view-result'),
   };
 
@@ -92,7 +93,15 @@
     show('result');
   }
 
+  function renderPending(team) {
+    document.getElementById('pending-team').textContent = team.teamId;
+    document.getElementById('pending-p1').textContent = team.player1;
+    document.getElementById('pending-p2').textContent = team.player2;
+    show('pending');
+  }
+
   function renderFromTeam(team) {
+    if (team.status === 'PENDING') return renderPending(team);
     if (team.status === 'WINNER' || team.status === 'LOSE') return renderResult(team);
     if (team.gameStatus === 'LIVE' && (team.status === 'PLAYING' || team.status === 'WAITING')) {
       return renderQuestion(team);
@@ -172,7 +181,9 @@
         document.getElementById('answer').value = '';
         btn.disabled = false;
       } else {
-        // CORRECT, OUT_OF_ATTEMPTS, GAME_OVER_ALREADY, ALREADY_DECIDED
+        // CORRECT, CORRECT_TOO_LATE, OUT_OF_ATTEMPTS, ALREADY_DECIDED, GAME_OVER_ALREADY,
+        // or PENDING (results not published yet) — team.status already reflects the
+        // right screen to show (PENDING/WINNER/LOSE), so just render from it.
         renderFromTeam(team);
       }
     } catch (e) {
@@ -186,6 +197,8 @@
   const socket = io();
   socket.on('game:started', () => refreshTeamState());
   socket.on('game:finished', () => refreshTeamState());
+  socket.on('results:published', () => refreshTeamState());
+  socket.on('results:unpublished', () => refreshTeamState());
   socket.on('game:reset', () => window.location.reload());
 
   // ---- Boot ----

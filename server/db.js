@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS game (
   startedAt TEXT,
   finishedAt TEXT,
   successfulCount INTEGER NOT NULL DEFAULT 0,
-  maxWinners INTEGER NOT NULL DEFAULT 6
+  maxWinners INTEGER NOT NULL DEFAULT 6,
+  resultsPublished INTEGER NOT NULL DEFAULT 0  -- 0 = players see "pending", 1 = real WINNER/LOSE is visible
 );
 
 CREATE TABLE IF NOT EXISTS questions (
@@ -56,11 +57,18 @@ CREATE TABLE IF NOT EXISTS attempts (
 );
 `);
 
+// Migration: existing databases created before resultsPublished existed
+// won't have the column yet — add it rather than breaking on upgrade.
+const gameColumns = db.prepare('PRAGMA table_info(game)').all().map((c) => c.name);
+if (!gameColumns.includes('resultsPublished')) {
+  db.exec('ALTER TABLE game ADD COLUMN resultsPublished INTEGER NOT NULL DEFAULT 0');
+}
+
 // Seed the single game row
 const gameRow = db.prepare('SELECT * FROM game WHERE id = 1').get();
 if (!gameRow) {
   db.prepare(
-    `INSERT INTO game (id, status, successfulCount, maxWinners) VALUES (1, 'WAITING', 0, 6)`
+    `INSERT INTO game (id, status, successfulCount, maxWinners, resultsPublished) VALUES (1, 'WAITING', 0, 6, 0)`
   ).run();
 }
 

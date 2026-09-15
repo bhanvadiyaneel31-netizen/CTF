@@ -82,6 +82,18 @@
     </div>
 
     <div class="card">
+      <h2>Publish results</h2>
+      <p>Players who've already finished (won or used all 3 attempts) see a "waiting for results" screen instead of
+        their outcome — this stops a team that's already lost from tipping off other teams still playing. Nothing is
+        revealed until you click Publish.</p>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span class="status-pill" id="publish-status-pill">—</span>
+        <button class="primary" id="publish-btn" style="max-width:220px;">Publish results</button>
+        <button class="ghost" id="unpublish-btn" style="max-width:220px;">Hide results again</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Teams</h2>
       <div class="table-scroll">
         <table>
@@ -99,6 +111,8 @@
           <tbody id="teams-tbody"></tbody>
         </table>
       </div>
+      <p style="margin-top:10px; font-size:13px;">This table always shows the real status to you — the "pending" screen
+        only affects what players themselves see.</p>
     </div>
 
     <div class="card hidden" id="final-results-card">

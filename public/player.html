@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>QR Relay Showdown</title>
-<link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>QR Relay Showdown</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
+
 <body>
   <div class="shell">
 
@@ -48,13 +50,15 @@
       <div class="players-row">
         <span id="wait-p1"></span> &amp; <span id="wait-p2"></span>
       </div>
-      <p style="margin-top:16px;">Your question is locked in as <strong id="wait-qnum"></strong>. Keep this page open — it'll switch automatically the moment the game starts.</p>
+      <p style="margin-top:16px;">Your question is locked in as <strong id="wait-qnum"></strong>. Keep this page open —
+        it'll switch automatically the moment the game starts.</p>
       <div class="spin"></div>
     </div>
 
     <div id="view-question" class="card hidden">
       <span class="status-pill live">Live</span>
-      <div class="eyebrow" style="margin-top:12px;">Question <span id="q-num"></span> · Team <span id="q-team"></span></div>
+      <div class="eyebrow" style="margin-top:12px;">Question <span id="q-num"></span> · Team <span id="q-team"></span>
+      </div>
       <h2 id="q-text"></h2>
       <div id="q-feedback" class="feedback wrong hidden"></div>
       <form id="answer-form">
@@ -66,6 +70,17 @@
         <p style="margin:0 0 14px; font-size:13px;"><span id="attempts-left"></span> attempts left</p>
         <button type="submit" class="primary" id="answer-btn">Submit answer</button>
       </form>
+    </div>
+
+    <div id="view-pending" class="card hidden">
+      <span class="status-pill waiting">Answer submitted</span>
+      <h1 style="margin-top:12px;">Nice work, <span id="pending-team"></span></h1>
+      <div class="players-row">
+        <span id="pending-p1"></span> &amp; <span id="pending-p2"></span>
+      </div>
+      <p style="margin-top:16px;">Your answer has been recorded. Results will appear here the moment the admin publishes
+        them — no need to refresh.</p>
+      <div class="spin"></div>
     </div>
 
     <div id="view-result" class="card hidden">
@@ -85,4 +100,5 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/player.js"></script>
 </body>
+
 </html>
