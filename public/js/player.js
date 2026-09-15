@@ -73,6 +73,7 @@
     ATTEMPTS_USED: 'You used all 3 attempts.',
     ANSWERED_LATE: 'Correct answer — but the first six teams had already qualified.',
     GAME_ENDED: 'The game was ended before you finished.',
+    ADMIN_DECISION: 'Decided by the event admin.',
   };
 
   function renderResult(team) {
@@ -85,7 +86,7 @@
       ? `<span class="rank-badge">Global rank #${team.globalRank}</span>`
       : '';
     document.getElementById('result-reason').textContent = isWinner
-      ? `Solved on attempt ${team.attemptsUsed} of ${team.maxAttempts}.`
+      ? (team.winReason === 'ADMIN_DECISION' ? 'Decided by the event admin.' : `Solved on attempt ${team.attemptsUsed} of ${team.maxAttempts}.`)
       : (LOSE_REASON_TEXT[team.loseReason] || 'The first six teams had already qualified.');
     document.getElementById('result-p1').textContent = team.player1;
     document.getElementById('result-p2').textContent = team.player2;

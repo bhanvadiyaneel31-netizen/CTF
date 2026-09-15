@@ -224,6 +224,57 @@ const updateQuestion = db.transaction((qrId, questionText, correctAnswer) => {
 });
 
 /**
+ * Admin override: the automatic answer-checking logic decides first (as
+ * always — this never changes), but the admin can override any team's
+ * final result afterward, and that override is authoritative. Only
+ * allowed before results are published; once published, the decision (auto
+ * or overridden) is locked in for that run, same as everything else.
+ *
+ * Promoting a team to WINNER hands it the next available rank (even past
+ * 6, since an admin override is a deliberate exception, not a bug). Demoting
+ * a WINNER back to LOSE clears its rank and successfulAt and gives back
+ * its slot in successfulCount — later winners keep their original ranks
+ * rather than being renumbered, so a gap can appear; that's expected for a
+ * rare manual correction, not a data error.
+ */
+const overrideTeamResult = db.transaction((teamId, newStatus) => {
+  if (!['WINNER', 'LOSE'].includes(newStatus)) {
+    throw new HttpError(400, 'Status must be WINNER or LOSE.');
+  }
+  const game = getGame();
+  if (game.resultsPublished) {
+    throw new HttpError(409, 'Results are already published — admin overrides are locked for this run.');
+  }
+  const team = getTeamByTeamId(teamId);
+  if (!team) throw new HttpError(404, 'Team not found.');
+
+  const now = new Date().toISOString();
+
+  if (newStatus === 'WINNER' && team.status !== 'WINNER') {
+    const newCount = game.successfulCount + 1;
+    db.prepare(
+      `UPDATE teams SET status = 'WINNER', successfulAt = ?, globalRank = ?, adminOverridden = 1 WHERE teamId = ?`
+    ).run(now, newCount, teamId);
+    db.prepare(`UPDATE game SET successfulCount = ? WHERE id = 1`).run(newCount);
+  } else if (newStatus === 'LOSE' && team.status === 'WINNER') {
+    const newCount = Math.max(game.successfulCount - 1, 0);
+    db.prepare(
+      `UPDATE teams SET status = 'LOSE', successfulAt = NULL, globalRank = NULL, adminOverridden = 1 WHERE teamId = ?`
+    ).run(teamId);
+    db.prepare(`UPDATE game SET successfulCount = ? WHERE id = 1`).run(newCount);
+  } else {
+    // Already the requested status, or LOSE -> LOSE (e.g. forcing a still-
+    // playing team to not-qualified) — just record the override, no rank math.
+    db.prepare(`UPDATE teams SET status = ?, adminOverridden = 1 WHERE teamId = ?`).run(
+      newStatus,
+      teamId
+    );
+  }
+
+  return getTeamByTeamId(teamId);
+});
+
+/**
  * Admin control: reveal (or hide again) the real WINNER/LOSE outcome to
  * players. A team's actual result is always decided immediately and
  * atomically inside submitAnswer — this flag only controls what the
@@ -275,5 +326,6 @@ module.exports = {
   resetGame,
   publishResults,
   unpublishResults,
+  overrideTeamResult,
   HttpError,
 };

@@ -97,6 +97,7 @@
 
   // ---- Data loading ----
   let qrUrls = [];
+  let currentGame = null;
 
   async function loadConfig() {
     const cfg = await api('/api/config');
@@ -112,6 +113,7 @@
   async function loadOverview() {
     const data = await api('/api/admin/overview');
     const game = data.game;
+    currentGame = game;
 
     const pill = document.getElementById('game-status-pill');
     pill.textContent = game.status;
@@ -218,7 +220,7 @@
         <td>${escapeHtml(t.player2Name)}</td>
         <td>Q${t.qrId}</td>
         <td>${t.attemptsUsed}/3</td>
-        <td class="${t.status === 'WINNER' ? 'badge-win' : t.status === 'LOSE' ? 'badge-lose' : 'badge-neutral'}">${t.status}</td>
+        <td class="${t.status === 'WINNER' ? 'badge-win' : t.status === 'LOSE' ? 'badge-lose' : 'badge-neutral'}">${t.status}${t.adminOverridden ? ' (admin)' : ''}</td>
       `;
       tr.addEventListener('click', () => openTeamModal(t.teamId));
       tbody.appendChild(tr);
@@ -233,9 +235,10 @@
       const attemptsHtml = data.attempts
         .map((a) => `<tr><td>${a.attemptNumber}</td><td>${escapeHtml(a.submittedAnswer)}</td><td class="${a.isCorrect ? 'badge-win' : 'badge-lose'}">${a.isCorrect ? 'Correct' : 'Wrong'}</td></tr>`)
         .join('') || '<tr><td colspan="3">No attempts yet.</td></tr>';
+      const published = !!(currentGame && currentGame.resultsPublished);
       content.innerHTML = `
         <h2>${data.team.teamId}</h2>
-        <p>${escapeHtml(data.team.player1Name)} &amp; ${escapeHtml(data.team.player2Name)} · Q${data.team.qrId} · <strong>${data.team.status}</strong></p>
+        <p>${escapeHtml(data.team.player1Name)} &amp; ${escapeHtml(data.team.player2Name)} · Q${data.team.qrId} · <strong>${data.team.status}</strong>${data.team.adminOverridden ? ' <span class="badge-neutral">(admin decision)</span>' : ''}</p>
         <p>Registered: ${new Date(data.team.registeredAt).toLocaleTimeString()}</p>
         ${data.team.globalRank ? `<p>Global rank: #${data.team.globalRank}</p>` : ''}
         <h3>Question</h3>
@@ -243,10 +246,34 @@
         <p><strong>Correct answer (admin only):</strong> ${escapeHtml(data.correctAnswer)}</p>
         <h3>Attempts</h3>
         <table><thead><tr><th>#</th><th>Answer</th><th>Result</th></tr></thead><tbody>${attemptsHtml}</tbody></table>
+        <h3 style="margin-top:16px;">Admin decision</h3>
+        <p style="font-size:13px;">The system decides automatically first. Overriding here is final for this team and locks once results are published.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="primary" id="override-winner-btn" style="max-width:180px;" ${published || data.team.status === 'WINNER' ? 'disabled' : ''}>Mark as Winner</button>
+          <button class="ghost" id="override-lose-btn" style="max-width:180px; border-color:var(--red); color:var(--red);" ${published || data.team.status === 'LOSE' ? 'disabled' : ''}>Mark as Not Qualified</button>
+        </div>
+        ${published ? '<p style="font-size:13px; margin-top:8px;">Results are published — overrides are locked for this run.</p>' : ''}
         <button class="ghost" id="close-modal" style="margin-top:16px;">Close</button>
       `;
       backdrop.classList.remove('hidden');
       document.getElementById('close-modal').addEventListener('click', () => backdrop.classList.add('hidden'));
+      document.getElementById('override-winner-btn').addEventListener('click', () => submitOverride(teamId, 'WINNER'));
+      document.getElementById('override-lose-btn').addEventListener('click', () => submitOverride(teamId, 'LOSE'));
+    } catch (e) {
+      dashError(e.message);
+    }
+  }
+
+  async function submitOverride(teamId, status) {
+    const verb = status === 'WINNER' ? 'a winner' : 'not qualified';
+    if (!confirm(`Mark ${teamId} as ${verb}? This overrides the automatic result and is final for this team.`)) return;
+    try {
+      await api(`/api/admin/team/${encodeURIComponent(teamId)}/override`, {
+        method: 'POST',
+        body: JSON.stringify({ status }),
+      });
+      document.getElementById('team-modal-backdrop').classList.add('hidden');
+      await loadAll();
     } catch (e) {
       dashError(e.message);
     }

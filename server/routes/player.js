@@ -39,14 +39,21 @@ function serializeTeamForClient(team, game, includeQuestionText) {
     const q = logic.getQuestionPublic(team.qrId);
     base.questionText = q ? q.questionText : null;
   }
+  if (!pending && team.status === 'WINNER' && team.adminOverridden) {
+    base.winReason = 'ADMIN_DECISION';
+  }
   if (!pending && team.status === 'LOSE') {
-    const last = logic.getLastAttempt(team.teamId);
-    if (last && last.isCorrect) {
-      base.loseReason = 'ANSWERED_LATE'; // correct, but all 6 winner slots were already taken
-    } else if (team.attemptsUsed >= logic.MAX_ATTEMPTS) {
-      base.loseReason = 'ATTEMPTS_USED';
+    if (team.adminOverridden) {
+      base.loseReason = 'ADMIN_DECISION';
     } else {
-      base.loseReason = 'GAME_ENDED'; // admin ended the game before this team finished
+      const last = logic.getLastAttempt(team.teamId);
+      if (last && last.isCorrect) {
+        base.loseReason = 'ANSWERED_LATE'; // correct, but all 6 winner slots were already taken
+      } else if (team.attemptsUsed >= logic.MAX_ATTEMPTS) {
+        base.loseReason = 'ATTEMPTS_USED';
+      } else {
+        base.loseReason = 'GAME_ENDED'; // admin ended the game before this team finished
+      }
     }
   }
   return base;

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS teams (
   successfulAt TEXT,
   globalRank INTEGER,
   sessionToken TEXT NOT NULL UNIQUE,
+  adminOverridden INTEGER NOT NULL DEFAULT 0,  -- 1 = an admin manually set this team's final result
   FOREIGN KEY (qrId) REFERENCES questions(qrId)
 );
 
@@ -62,6 +63,11 @@ CREATE TABLE IF NOT EXISTS attempts (
 const gameColumns = db.prepare('PRAGMA table_info(game)').all().map((c) => c.name);
 if (!gameColumns.includes('resultsPublished')) {
   db.exec('ALTER TABLE game ADD COLUMN resultsPublished INTEGER NOT NULL DEFAULT 0');
+}
+
+const teamColumns = db.prepare('PRAGMA table_info(teams)').all().map((c) => c.name);
+if (!teamColumns.includes('adminOverridden')) {
+  db.exec('ALTER TABLE teams ADD COLUMN adminOverridden INTEGER NOT NULL DEFAULT 0');
 }
 
 // Seed the single game row
