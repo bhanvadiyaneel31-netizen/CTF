@@ -58,7 +58,7 @@ router.get('/api/admin/overview', requireAdmin, (req, res) => {
 router.get('/api/admin/teams', requireAdmin, (req, res) => {
   const teams = db
     .prepare(
-      `SELECT teamId, player1Name, player2Name, qrId, registeredAt, status, attemptsUsed, successfulAt, globalRank
+      `SELECT teamId, player1Name, player2Name, qrId, registeredAt, status, attemptsUsed, successfulAt, globalRank, adminOverridden
        FROM teams ORDER BY
          CASE WHEN globalRank IS NULL THEN 1 ELSE 0 END, globalRank ASC, registeredAt ASC`
     )
@@ -114,6 +114,20 @@ router.post('/api/admin/end', requireAdmin, (req, res) => {
     const status = e.statusCode || 500;
     if (status === 500) console.error(e);
     res.status(status).json({ error: e.message || 'Could not end game.' });
+  }
+});
+
+router.post('/api/admin/team/:teamId/override', requireAdmin, (req, res) => {
+  const { status } = req.body || {};
+  try {
+    const team = logic.overrideTeamResult(req.params.teamId, status);
+    const io = req.app.get('io');
+    io.emit('leaderboard:update');
+    res.json({ team });
+  } catch (e) {
+    const httpStatus = e.statusCode || 500;
+    if (httpStatus === 500) console.error(e);
+    res.status(httpStatus).json({ error: e.message || 'Could not override this team\'s result.' });
   }
 });
 
