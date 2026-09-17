@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const db = require('../db');
 
-const TEAMS_PER_QR = 3;
+const TEAMS_PER_QR = 4;
 const MAX_ATTEMPTS = 3;
 
 function normalizeAnswer(raw) {
