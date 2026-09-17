@@ -132,7 +132,7 @@
         return showError('Registration closed', 'The game has already started, so new teams can no longer join.');
       }
       if (info.full) {
-        return showError('This question is full', 'All 3 teams for this QR code have already registered.');
+        return showError('This question is full', `All ${info.slotsTotal} teams for this QR code have already registered.`);
       }
       show('register');
     } catch (e) {
