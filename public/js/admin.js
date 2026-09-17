@@ -40,7 +40,7 @@
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
-    await api('/api/admin/logout', { method: 'POST' }).catch(() => { });
+    await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
     loginView.classList.remove('hidden');
     dashView.classList.add('hidden');
   });
@@ -119,7 +119,8 @@
     pill.textContent = game.status;
     pill.className = 'status-pill ' + statusPillClass(game.status);
 
-    document.getElementById('stat-teams').textContent = `${data.totalTeams}/18`;
+    const totalCapacity = data.teamsPerQr * 6;
+    document.getElementById('stat-teams').textContent = `${data.totalTeams}/${totalCapacity}`;
     document.getElementById('stat-successful').textContent = `${game.successfulCount}/${game.maxWinners}`;
     document.getElementById('stat-remaining').textContent = Math.max(data.totalTeams - game.successfulCount, 0);
 
