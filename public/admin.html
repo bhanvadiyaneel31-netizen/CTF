@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin · QR Relay Showdown</title>
-  <link rel="stylesheet" href="/css/style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin · QR Relay Showdown</title>
+<link rel="stylesheet" href="/css/style.css" />
 </head>
-
 <body>
 
   <div id="view-login" class="shell">
@@ -43,18 +41,9 @@
     <div class="card">
       <h2>Event overview</h2>
       <div class="stat-grid">
-        <div class="stat-box">
-          <div class="num" id="stat-teams">0/18</div>
-          <div class="label">Teams registered</div>
-        </div>
-        <div class="stat-box">
-          <div class="num" id="stat-successful">0/6</div>
-          <div class="label">Successful</div>
-        </div>
-        <div class="stat-box">
-          <div class="num" id="stat-remaining">0</div>
-          <div class="label">Still playing</div>
-        </div>
+        <div class="stat-box"><div class="num" id="stat-teams">0/24</div><div class="label">Teams registered</div></div>
+        <div class="stat-box"><div class="num" id="stat-successful">0/6</div><div class="label">Successful</div></div>
+        <div class="stat-box"><div class="num" id="stat-remaining">0</div><div class="label">Still playing</div></div>
       </div>
       <h3 style="margin-top:20px;">QR codes</h3>
       <div class="qr-grid" id="qr-grid"></div>
@@ -74,18 +63,13 @@
 
     <div class="card">
       <h2>Game controls</h2>
-      <p>Every team gets to use all 3 attempts, even after the 6 winner slots are filled — the game finishes on its own
-        once every team has either won or used all 3 attempts. Use this button to end it manually instead (e.g. some
-        teams never finished).</p>
-      <button class="ghost" id="end-btn" style="max-width:280px; border-color:var(--red); color:var(--red);">End game
-        now</button>
+      <p>Every team gets to use all 3 attempts, even after the 6 winner slots are filled — the game finishes on its own once every team has either won or used all 3 attempts. Use this button to end it manually instead (e.g. some teams never finished).</p>
+      <button class="ghost" id="end-btn" style="max-width:280px; border-color:var(--red); color:var(--red);">End game now</button>
     </div>
 
     <div class="card">
       <h2>Publish results</h2>
-      <p>Players who've already finished (won or used all 3 attempts) see a "waiting for results" screen instead of
-        their outcome — this stops a team that's already lost from tipping off other teams still playing. Nothing is
-        revealed until you click Publish.</p>
+      <p>Players who've already finished (won or used all 3 attempts) see a "waiting for results" screen instead of their outcome — this stops a team that's already lost from tipping off other teams still playing. Nothing is revealed until you click Publish.</p>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <span class="status-pill" id="publish-status-pill">—</span>
         <button class="primary" id="publish-btn" style="max-width:220px;">Publish results</button>
@@ -98,21 +82,12 @@
       <div class="table-scroll">
         <table>
           <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Team</th>
-              <th>Player 1</th>
-              <th>Player 2</th>
-              <th>QR</th>
-              <th>Attempts</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>Rank</th><th>Team</th><th>Player 1</th><th>Player 2</th><th>QR</th><th>Attempts</th><th>Status</th></tr>
           </thead>
           <tbody id="teams-tbody"></tbody>
         </table>
       </div>
-      <p style="margin-top:10px; font-size:13px;">This table always shows the real status to you — the "pending" screen
-        only affects what players themselves see.</p>
+      <p style="margin-top:10px; font-size:13px;">This table always shows the real status to you — the "pending" screen only affects what players themselves see.</p>
     </div>
 
     <div class="card hidden" id="final-results-card">
@@ -132,5 +107,4 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/admin.js"></script>
 </body>
-
 </html>
